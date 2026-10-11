@@ -18,3 +18,4 @@ allowBuilds:
 pmOnFail: warn
 minimumReleaseAgeExclude:
   - '@discord/*'
+  - '@vencord/*'
