@@ -19,10 +19,10 @@
 import { app } from "electron";
 import { join } from "path";
 
-export const DATA_DIR = process.env.DISCORD_USER_DATA_DIR ?? (
+export const DATA_DIR = process.env.DISCORDMOD_USER_DATA_DIR ?? (
     process.env.DISCORD_USER_DATA_DIR
-        ? join(process.env.DISCORD_USER_DATA_DIR, "..", "DiscordData")
-        : join(app.getPath("userData"), "..", "Discord")
+        ? join(process.env.DISCORD_USER_DATA_DIR, "..", "DiscordModData")
+        : join(app.getPath("userData"), "..", "DiscordMod")
 );
 export const SETTINGS_DIR = join(DATA_DIR, "settings");
 export const THEMES_DIR = join(DATA_DIR, "themes");
