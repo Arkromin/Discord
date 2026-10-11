@@ -7,8 +7,7 @@
 
 The cutest Discord client mod
 
-![](<img width="1440" height="994" alt="image" src="https://github.com/user-attachments/assets/6de13aa2-ebc0-498f-b35c-a57c5f94af54" />
-)
+![Settings screenshot](assets/screenshot.png)
 
 ## Features
 
