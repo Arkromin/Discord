@@ -97,8 +97,8 @@ try {
         stdio: "inherit",
         env: {
             ...process.env,
-            DISCORD_USER_DATA_DIR: BASE_DIR,
-            DISCORD_DEV_INSTALL: "1"
+            DISCORDMOD_USER_DATA_DIR: BASE_DIR,
+            DISCORDMOD_DEV_INSTALL: "1"
         }
     });
 } catch {
