@@ -7,7 +7,8 @@
 
 The cutest Discord client mod
 
-![](<img width="1509" height="1042" alt="image" src="https://github.com/user-attachments/assets/2371cd70-96c1-4a7a-a395-f57e2e117f40" />)
+![](<img width="1440" height="994" alt="image" src="https://github.com/user-attachments/assets/6de13aa2-ebc0-498f-b35c-a57c5f94af54" />
+)
 
 ## Features
 
