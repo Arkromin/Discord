@@ -685,6 +685,15 @@ export const Devs = /* #__PURE__*/ Object.freeze({
     f3tch: {
         name: "f3tch",
         id: 1016388460929626174n
+    },
+    domi_btnr: {
+        name: "domi.btnr",
+        id: 354191516979429376n,
+        badge: false
+    },
+    Arkromin: {
+        name: "Arkromin",
+        id: 0n
     }
 } satisfies Record<string, Dev>);
 
