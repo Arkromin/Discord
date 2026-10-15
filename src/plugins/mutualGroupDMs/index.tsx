@@ -20,12 +20,12 @@ import "./style.css";
 
 import { BaseText } from "@components/BaseText";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { Channel, User } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import { isNonNullish } from "@utils/guards";
 import { Logger } from "@utils/Logger";
 import { classes } from "@utils/misc";
 import definePlugin from "@utils/types";
-import { Channel, User } from "@discord/discord-types";
 import { findByPropsLazy, findCssClassesLazy } from "@webpack";
 import { Avatar, ChannelStore, Clickable, IconUtils, RelationshipStore, ScrollerThin, useMemo, UsernameUtils, UserStore } from "@webpack/common";
 import { ComponentType, JSX } from "react";

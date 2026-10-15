@@ -9,8 +9,8 @@ import { hasAnyVisibleSettings, isPluginEnabled, pluginRequiresRestart, startDep
 import { Settings } from "@api/Settings";
 import { CogWheel, InfoIcon } from "@components/Icons";
 import { AddonCard } from "@components/settings/AddonCard";
-import { Plugin } from "@utils/types";
 import { ToastPosition } from "@discord/discord-types/enums";
+import { Plugin } from "@utils/types";
 import { React, showToast } from "@webpack/common";
 
 import { cl, logger } from ".";

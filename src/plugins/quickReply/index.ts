@@ -18,12 +18,12 @@
 
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
+import { Message } from "@discord/discord-types";
+import { MessageFlags } from "@discord/discord-types/enums";
 import NoBlockedMessagesPlugin from "@plugins/noBlockedMessages";
 import NoReplyMentionPlugin from "@plugins/noReplyMention";
 import { Devs, IS_MAC } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { Message } from "@discord/discord-types";
-import { MessageFlags } from "@discord/discord-types/enums";
 import { ChannelStore, ComponentDispatch, FluxDispatcher as Dispatcher, MessageActions, MessageStore, MessageTypeSets, PermissionsBits, PermissionStore, RelationshipStore, SelectedChannelStore, UserStore } from "@webpack/common";
 
 let currentlyReplyingId: string | null = null;

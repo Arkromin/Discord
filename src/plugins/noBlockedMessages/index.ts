@@ -17,11 +17,11 @@
 */
 
 import { definePluginSettings, migratePluginSetting } from "@api/Settings";
+import { Message } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import { runtimeHashMessageKey } from "@utils/intlHash";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
-import { Message } from "@discord/discord-types";
 import { i18n, RelationshipStore } from "@webpack/common";
 
 interface MessageDeleteProps {

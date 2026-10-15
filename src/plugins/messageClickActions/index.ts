@@ -18,10 +18,10 @@
 
 import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
+import { ApplicationIntegrationType, MessageFlags } from "@discord/discord-types/enums";
 import NoReplyMentionPlugin from "@plugins/noReplyMention";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { ApplicationIntegrationType, MessageFlags } from "@discord/discord-types/enums";
 import { findByPropsLazy } from "@webpack";
 import { AuthenticationStore, FluxDispatcher, MessageTypeSets, PermissionsBits, PermissionStore, WindowStore } from "@webpack/common";
 

@@ -6,11 +6,11 @@
 
 import { ChatBarButton } from "@api/ChatButtons";
 import { UploadIcon } from "@components/Icons";
+import { Message } from "@discord/discord-types";
+import { MessageFlags, MessageType } from "@discord/discord-types/enums";
 import { Devs } from "@utils/constants";
 import { pluralise } from "@utils/misc";
 import definePlugin from "@utils/types";
-import { Message } from "@discord/discord-types";
-import { MessageFlags, MessageType } from "@discord/discord-types/enums";
 import { findByPropsLazy } from "@webpack";
 import { AuthenticationStore, ChannelStore, EditMessageStore, MessageStore, PermissionsBits, PermissionStore, RestAPI, SelectedChannelStore, showToast } from "@webpack/common";
 

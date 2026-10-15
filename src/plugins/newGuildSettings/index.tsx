@@ -22,9 +22,9 @@ import {
 } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { CogWheel } from "@components/Icons";
+import { Guild } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { Guild } from "@discord/discord-types";
 import { findByCodeLazy, findByPropsLazy, mapMangledModuleLazy } from "@webpack";
 import { Menu, UserStore } from "@webpack/common";
 

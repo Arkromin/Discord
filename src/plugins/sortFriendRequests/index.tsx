@@ -21,10 +21,10 @@ import "./styles.css";
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { TooltipContainer } from "@components/TooltipContainer";
+import { User } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import definePlugin, { OptionType } from "@utils/types";
-import { User } from "@discord/discord-types";
 import { DateUtils, RelationshipStore, Text } from "@webpack/common";
 import { PropsWithChildren } from "react";
 

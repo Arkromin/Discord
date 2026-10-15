@@ -19,11 +19,11 @@
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { isPluginEnabled } from "@api/PluginManager";
 import { LinkIcon, TopRightArrow } from "@components/Icons";
+import { Message, Sticker } from "@discord/discord-types";
 import ExpressionClonerPlugin from "@plugins/expressionCloner";
 import { Devs } from "@utils/constants";
 import { copyWithToast } from "@utils/discord";
 import definePlugin from "@utils/types";
-import { Message, Sticker } from "@discord/discord-types";
 import { Menu, React, StickersStore } from "@webpack/common";
 
 const StickerExt = [, "png", "png", "json", "gif"] as const;

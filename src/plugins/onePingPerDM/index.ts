@@ -5,10 +5,10 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
-import definePlugin, { OptionType } from "@utils/types";
 import { MessageJSON } from "@discord/discord-types";
 import { ChannelType } from "@discord/discord-types/enums";
+import { Devs } from "@utils/constants";
+import definePlugin, { OptionType } from "@utils/types";
 import { ChannelStore, ReadStateStore, UserStore } from "@webpack/common";
 
 const settings = definePluginSettings({

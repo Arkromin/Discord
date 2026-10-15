@@ -20,10 +20,10 @@ import "./style.css";
 
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { FluxStore } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import definePlugin, { OptionType } from "@utils/types";
-import { FluxStore } from "@discord/discord-types";
 import { findStoreLazy } from "@webpack";
 
 import { MemberCount } from "./MemberCount";

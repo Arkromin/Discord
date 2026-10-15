@@ -20,10 +20,10 @@ import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
 import { getUserSettingLazy } from "@api/UserSettings";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { FluxStore } from "@discord/discord-types";
 import DiscordToolboxPlugin from "@plugins/discordToolbox";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { FluxStore } from "@discord/discord-types";
 import { findByPropsLazy, findComponentByCodeLazy, findStoreLazy } from "@webpack";
 import { Menu, Popout, useRef, useState, useStateFromStores } from "@webpack/common";
 

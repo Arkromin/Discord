@@ -19,9 +19,9 @@
 import * as DataStore from "@api/DataStore";
 import { popNotice, showNotice } from "@api/Notices";
 import { showNotification } from "@api/Notifications";
-import { getUniqueUsername, openUserProfile } from "@utils/discord";
 import { FluxStore } from "@discord/discord-types";
 import { ChannelType, RelationshipType } from "@discord/discord-types/enums";
+import { getUniqueUsername, openUserProfile } from "@utils/discord";
 import { findStoreLazy } from "@webpack";
 import { ChannelStore, GuildMemberStore, GuildStore, RelationshipStore, UserStore, UserUtils } from "@webpack/common";
 

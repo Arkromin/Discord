@@ -17,10 +17,10 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
+import { WebpackRequire } from "@discord/discord-types/webpack";
 import { Devs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType, StartAt } from "@utils/types";
-import { WebpackRequire } from "@discord/discord-types/webpack";
 import { Flux, FluxDispatcher } from "@webpack/common";
 
 const settings = definePluginSettings({

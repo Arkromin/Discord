@@ -18,9 +18,9 @@
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { TooltipContainer } from "@components/TooltipContainer";
+import { RenderModalProps } from "@discord/discord-types";
 import { classes } from "@utils/misc";
 import { IconComponent } from "@utils/types";
-import { RenderModalProps } from "@discord/discord-types";
 import { ConfirmModal,openModal, useEffect, useState } from "@webpack/common";
 
 import { settings } from "./settings";

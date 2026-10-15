@@ -8,11 +8,11 @@ import "./ContributorModal.css";
 
 import { useSettings } from "@api/Settings";
 import { Link } from "@components/Link";
+import { RenderModalProps, User } from "@discord/discord-types";
 import { DevsById } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { fetchUserProfile } from "@utils/discord";
 import { classes, pluralise } from "@utils/misc";
-import { RenderModalProps, User } from "@discord/discord-types";
 import { Forms, Modal, openModal, showToast, useEffect, useMemo, UserProfileStore, useStateFromStores } from "@webpack/common";
 
 import Plugins from "~plugins";

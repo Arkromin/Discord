@@ -18,9 +18,9 @@
 
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { CloudUpload } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { CloudUpload } from "@discord/discord-types";
 import { findByCodeLazy } from "@webpack";
 import { useState } from "@webpack/common";
 

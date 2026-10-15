@@ -17,12 +17,12 @@
 */
 
 import { Settings, SettingsStore } from "@api/Settings";
+import { ThemeStore } from "@discord/discord-types";
 import { createAndAppendStyle } from "@utils/css";
 import { isNonNullish } from "@utils/guards";
-import { ThemeStore } from "@discord/discord-types";
 import { PopoutWindowStore } from "@webpack/common";
 
-import { userStyleRootNode, discordRootNode } from "./Styles";
+import { discordRootNode,userStyleRootNode } from "./Styles";
 
 let style: HTMLStyleElement;
 let themesStyle: HTMLStyleElement;

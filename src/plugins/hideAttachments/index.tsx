@@ -22,10 +22,10 @@ import { get, set } from "@api/DataStore";
 import { updateMessage } from "@api/MessageUpdater";
 import { migratePluginSettings } from "@api/Settings";
 import { ImageInvisible, ImageVisible } from "@components/Icons";
+import { Message } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import { classes } from "@utils/misc";
 import definePlugin from "@utils/types";
-import { Message } from "@discord/discord-types";
 import { ChannelStore } from "@webpack/common";
 
 const KEY = "HideAttachments_HiddenIds";

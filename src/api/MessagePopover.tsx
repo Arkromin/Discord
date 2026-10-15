@@ -17,9 +17,9 @@
 */
 
 import ErrorBoundary from "@components/ErrorBoundary";
+import { Channel, Message } from "@discord/discord-types";
 import { Logger } from "@utils/Logger";
 import { IconComponent } from "@utils/types";
-import { Channel, Message } from "@discord/discord-types";
 import type { ComponentType, MouseEventHandler } from "react";
 
 import { useSettings } from "./Settings";

@@ -17,12 +17,12 @@
 */
 
 import ErrorBoundary from "@components/ErrorBoundary";
+import { ProfileBadge } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import { isNonNullish } from "@utils/guards";
 import { sleep } from "@utils/misc";
 import { Queue } from "@utils/Queue";
 import definePlugin from "@utils/types";
-import { ProfileBadge } from "@discord/discord-types";
 import { Constants, FluxDispatcher, RestAPI, UserProfileStore, UserStore, useState } from "@webpack/common";
 import { type ComponentType, type ReactNode } from "react";
 

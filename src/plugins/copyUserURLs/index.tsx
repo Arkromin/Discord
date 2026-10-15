@@ -18,10 +18,10 @@
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { LinkIcon } from "@components/Icons";
+import type { Channel, User } from "@discord/discord-types";
 import { copyToClipboard } from "@utils/clipboard";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import type { Channel, User } from "@discord/discord-types";
 import { Menu } from "@webpack/common";
 
 interface UserContextProps {

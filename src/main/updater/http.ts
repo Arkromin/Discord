@@ -17,8 +17,8 @@
 */
 
 import { fetchBuffer, fetchJson } from "@main/utils/http";
-import { IpcEvents } from "@shared/IpcEvents";
 import { DISCORD_USER_AGENT } from "@shared/discordUserAgent";
+import { IpcEvents } from "@shared/IpcEvents";
 import { ipcMain } from "electron";
 import { writeFile } from "fs/promises";
 import { join } from "path";
@@ -26,7 +26,7 @@ import { join } from "path";
 import gitHash from "~git-hash";
 import gitRemote from "~git-remote";
 
-import { serializeErrors, DISCORD_FILES } from "./common";
+import { DISCORD_FILES,serializeErrors } from "./common";
 
 const API_BASE = `https://api.github.com/repos/${gitRemote}`;
 let PendingUpdates = [] as [string, string][];

@@ -18,10 +18,10 @@
 
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { ScreenshareIcon } from "@components/Icons";
+import { ApplicationStream, Channel, Stream, User } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import { openImageModal } from "@utils/discord";
 import definePlugin from "@utils/types";
-import { ApplicationStream, Channel, Stream, User } from "@discord/discord-types";
 import { ApplicationStreamingStore, ApplicationStreamPreviewStore, Menu } from "@webpack/common";
 
 export interface UserContextProps {

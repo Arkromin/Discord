@@ -17,10 +17,10 @@
 */
 
 import { ApplicationCommandInputType, findOption, OptionalMessageOption, sendBotMessage } from "@api/Commands";
+import { Command, SpotifyTrack } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
 import definePlugin from "@utils/types";
-import { Command, SpotifyTrack } from "@discord/discord-types";
 import { FluxDispatcher, MessageActions, PendingReplyStore, SpotifyStore } from "@webpack/common";
 
 function makeCommand(name: string, formatUrl: (track: SpotifyTrack) => string): Command {

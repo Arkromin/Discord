@@ -19,10 +19,10 @@
 import { NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
 import { ImageIcon } from "@components/Icons";
+import type { Channel, Guild, User } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import { openImageModal } from "@utils/discord";
 import definePlugin, { OptionType } from "@utils/types";
-import type { Channel, Guild, User } from "@discord/discord-types";
 import { GuildMemberStore, IconUtils, Menu } from "@webpack/common";
 import type { MouseEvent } from "react";
 

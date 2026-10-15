@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { classNameFactory } from "@utils/css";
 import { ToastType } from "@discord/discord-types";
 import { ToastPosition } from "@discord/discord-types/enums";
+import { classNameFactory } from "@utils/css";
 import { showToast as originalShowToast, UserStore } from "@webpack/common";
 
 import { Auth } from "./auth";

@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { ConstEnumToRuntimeEnum } from "@utils/types";
 import * as t from "@discord/discord-types";
 import * as enums from "@discord/discord-types/enums";
+import { ConstEnumToRuntimeEnum } from "@utils/types";
 import { findByCodeLazy, findByPropsLazy } from "@webpack";
 
 import { waitForStore } from "./internal";

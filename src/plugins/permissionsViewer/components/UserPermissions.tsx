@@ -18,11 +18,11 @@
 
 import ErrorBoundary from "@components/ErrorBoundary";
 import { HeadingTertiary } from "@components/Heading";
+import type { Guild, GuildMember, RoleOrUserPermission } from "@discord/discord-types";
+import { PermissionOverwriteType } from "@discord/discord-types/enums";
 import { cl, getGuildPermissionSpecMap, getSortedRolesForMember, sortUserRoles } from "@plugins/permissionsViewer/utils";
 import { getIntlMessage } from "@utils/discord";
 import { classes } from "@utils/misc";
-import type { Guild, GuildMember, RoleOrUserPermission } from "@discord/discord-types";
-import { PermissionOverwriteType } from "@discord/discord-types/enums";
 import { findCssClassesLazy } from "@webpack";
 import { PermissionsBits, Text, Tooltip, useMemo, UserStore } from "@webpack/common";
 

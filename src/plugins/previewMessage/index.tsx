@@ -19,9 +19,9 @@
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { generateId, sendBotMessage } from "@api/Commands";
 import { EyeIcon } from "@components/Icons";
+import { CloudUpload, MessageAttachment } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import definePlugin, { IconComponent, StartAt } from "@utils/types";
-import { CloudUpload, MessageAttachment } from "@discord/discord-types";
 import { DraftStore, DraftType, UploadAttachmentStore, UserStore, useStateFromStores } from "@webpack/common";
 
 const objectURLMap = new Map<string, string[]>();

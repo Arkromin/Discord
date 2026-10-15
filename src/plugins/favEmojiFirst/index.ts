@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { Emoji } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { Emoji } from "@discord/discord-types";
 import { EmojiStore } from "@webpack/common";
 
 interface EmojiAutocompleteState {

@@ -17,13 +17,13 @@
 */
 
 import { traceFunction } from "@debug/Tracer";
+import type { FluxStore } from "@discord/discord-types";
+import type { ModuleExports, ModuleFactory, WebpackRequire } from "@discord/discord-types/webpack";
 import { makeLazy, proxyLazy } from "@utils/lazy";
 import { LazyComponent } from "@utils/lazyReact";
 import { Logger } from "@utils/Logger";
 import { canonicalizeMatch } from "@utils/patches";
 import { escapeRegExp } from "@utils/text";
-import type { FluxStore } from "@discord/discord-types";
-import type { ModuleExports, ModuleFactory, WebpackRequire } from "@discord/discord-types/webpack";
 
 import type { AnyModuleFactory, AnyWebpackRequire } from "./types";
 

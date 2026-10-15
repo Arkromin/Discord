@@ -18,8 +18,8 @@
 
 import { Divider } from "@components/Divider";
 import { FormSwitch } from "@components/FormSwitch";
-import { Margins } from "@utils/margins";
 import { RenderModalProps } from "@discord/discord-types";
+import { Margins } from "@utils/margins";
 import { Forms, Modal,openModal, SearchableSelect, useMemo } from "@webpack/common";
 
 import { settings } from "./settings";

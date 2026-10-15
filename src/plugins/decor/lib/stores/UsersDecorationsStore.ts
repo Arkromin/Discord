@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { User } from "@discord/discord-types";
 import { AvatarDecoration } from "@plugins/decor";
 import { getUsersDecorations } from "@plugins/decor/lib/api";
 import { DECORATION_FETCH_COOLDOWN, SKU_ID } from "@plugins/decor/lib/constants";
 import { debounce } from "@shared/debounce";
 import { proxyLazy } from "@utils/lazy";
-import { User } from "@discord/discord-types";
 import { useEffect, useState, zustandCreate } from "@webpack/common";
 
 interface UserDecorationData {

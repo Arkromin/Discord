@@ -19,9 +19,9 @@
 import * as DataStore from "@api/DataStore";
 import { Settings } from "@api/Settings";
 import { openNotificationSettingsModal } from "@components/settings/tabs/discord/NotificationSettings";
+import { RenderModalProps } from "@discord/discord-types";
 import { classNameFactory } from "@utils/css";
 import { useAwaiter } from "@utils/react";
-import { RenderModalProps } from "@discord/discord-types";
 import { ConfirmModal, Forms, ListScrollerThin, Modal, openModal, React, Timestamp, useEffect, useReducer, useState } from "@webpack/common";
 import { nanoid } from "nanoid";
 import type { DispatchWithoutAction } from "react";

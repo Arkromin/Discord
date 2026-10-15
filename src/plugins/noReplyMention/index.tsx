@@ -17,9 +17,9 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
+import type { Message } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import type { Message } from "@discord/discord-types";
 import { ChannelStore, GuildMemberStore } from "@webpack/common";
 
 const settings = definePluginSettings({

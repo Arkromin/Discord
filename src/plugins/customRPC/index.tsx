@@ -25,12 +25,12 @@ import { Divider } from "@components/Divider";
 import { Flex } from "@components/Flex";
 import { Link } from "@components/Link";
 import { Paragraph } from "@components/Paragraph";
+import { Activity } from "@discord/discord-types";
+import { ActivityType } from "@discord/discord-types/enums";
 import { Devs } from "@utils/constants";
 import { isTruthy } from "@utils/guards";
 import { useAwaiter } from "@utils/react";
 import definePlugin, { OptionType } from "@utils/types";
-import { Activity } from "@discord/discord-types";
-import { ActivityType } from "@discord/discord-types/enums";
 import { findByCodeLazy, findComponentByCodeLazy } from "@webpack";
 import { ApplicationAssetUtils, FluxDispatcher, Menu, React, UserStore } from "@webpack/common";
 

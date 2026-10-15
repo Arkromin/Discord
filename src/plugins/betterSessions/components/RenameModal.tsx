@@ -17,9 +17,9 @@
 */
 
 import { TextButton } from "@components/Button";
+import { RenderModalProps } from "@discord/discord-types";
 import { SessionInfo } from "@plugins/betterSessions/types";
 import { getDefaultName, savedSessionsCache, saveSessionsToDataStore } from "@plugins/betterSessions/utils";
-import { RenderModalProps } from "@discord/discord-types";
 import { Forms, Modal,React, TextInput } from "@webpack/common";
 import { KeyboardEvent } from "react";
 

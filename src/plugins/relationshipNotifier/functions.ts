@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { getUniqueUsername, openUserProfile } from "@utils/discord";
 import { ChannelType, RelationshipType } from "@discord/discord-types/enums";
+import { getUniqueUsername, openUserProfile } from "@utils/discord";
 import { UserUtils } from "@webpack/common";
 
 import settings from "./settings";

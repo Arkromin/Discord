@@ -17,9 +17,9 @@
 */
 
 import { definePluginSettings } from "@api/Settings";
+import { Channel, Message } from "@discord/discord-types";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { Channel, Message } from "@discord/discord-types";
 import { ContextMenuApi, FluxDispatcher, Menu, MessageActions } from "@webpack/common";
 
 enum GreetMode {
