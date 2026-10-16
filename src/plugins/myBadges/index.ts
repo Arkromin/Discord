@@ -18,10 +18,16 @@
 
 import { addProfileBadge, BadgePosition, BadgeUserArgs, ProfileBadge, removeProfileBadge } from "@api/Badges";
 import { Devs } from "@utils/constants";
+import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
+import { findByPropsLazy } from "@webpack";
 import { UserStore } from "@webpack/common";
 
 const ICON_URL = "https://cdn.discordapp.com/badge-icons/";
+const CATALOG_ID_PREFIX = "my_badges_";
+
+const logger = new Logger("MyBadges");
+const BadgeDirectory = findByPropsLazy("openBadgeDirectoryModal");
 
 // Local, cosmetic only: these badges are drawn on YOUR OWN profile in YOUR client.
 // Nobody else sees them, and Discord's servers are not told about them.
@@ -66,11 +72,17 @@ interface CatalogBadges {
     owned: unknown[];
 }
 
+interface PopoutBadges {
+    fixedBadges: any[];
+    reorderableBadges: any[];
+    hiddenBadges: any[];
+}
+
 // Same cosmetic badges, shaped like the badge objects used by Discord's "Your badges" panel
 const CATALOG_BADGES: CatalogBadge[] = BADGES.map(b => {
     const icon = `${ICON_URL}${b.icon}.png`;
     return {
-        badge_id: `my_badges_${b.id}`,
+        badge_id: `${CATALOG_ID_PREFIX}${b.id}`,
         name: b.description,
         description: b.description,
         owned: true,
@@ -114,6 +126,21 @@ export default definePlugin({
                 match: /(displayedUserId:(\i),.{0,400}?\{earnable:\i,owned:\i\}=\i\.useMemo\(\(\)=>)(\(0,\i\.\i\)\(\i\))/,
                 replace: "$1$self.addCatalogBadges($3,$2)"
             }
+        },
+        {
+            // "Customize your badges" popout: add our badges to the fixed (non reorderable) badges
+            find: "VIEW_BADGE_CUSTOMIZATION",
+            replacement: [
+                {
+                    match: /(\{fixedBadges:\i,reorderableBadges:\i,hiddenBadges:\i\}=)(\(0,\i\.\i\)\(\))/,
+                    replace: "$1$self.addPopoutBadges($2)"
+                },
+                {
+                    // Clicking one of our badges opens its details instead of Discord's hide/reorder menu
+                    match: /(let\{badge:(\i),index:\i,onClose:(\i),onAction:\i,controlRef:\i\}=\i,\[\i,\i\]=\i\.useState\(!1\);function \i\(\i\)\{)/,
+                    replace: "$1if($self.handleBadgeClick($2,$3))return;"
+                }
+            ]
         }
     ],
 
@@ -127,6 +154,28 @@ export default definePlugin({
         } catch {
             return result;
         }
+    },
+
+    addPopoutBadges(result: PopoutBadges): PopoutBadges {
+        try {
+            const known = new Set(result.fixedBadges.map(b => b?.badge_id));
+            const extra = CATALOG_BADGES.filter(b => !known.has(b.badge_id));
+            return { ...result, fixedBadges: [...result.fixedBadges, ...extra] };
+        } catch {
+            return result;
+        }
+    },
+
+    handleBadgeClick(badge: any, onClose?: () => void): boolean {
+        if (typeof badge?.badge_id !== "string" || !badge.badge_id.startsWith(CATALOG_ID_PREFIX)) return false;
+
+        try {
+            onClose?.();
+            BadgeDirectory.openBadgeDirectoryModal({ viewingCurrentUserBadges: true, initialBadgeId: badge.badge_id });
+        } catch (e) {
+            logger.error("Failed to open badge details", e);
+        }
+        return true;
     },
 
     start: () => addProfileBadge(Badge),
