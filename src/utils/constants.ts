@@ -693,7 +693,7 @@ export const Devs = /* #__PURE__*/ Object.freeze({
     },
     Arkromin: {
         name: "Arkromin",
-        id: 0n
+        id: 1155813574753656843n
     }
 } satisfies Record<string, Dev>);
 

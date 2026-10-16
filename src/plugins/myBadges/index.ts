@@ -41,6 +41,53 @@ const BADGES: { id: string, description: string, icon: string, link?: string; }[
     { id: "premium", description: "Subscriber", icon: "2ba85e8026a8614b640c2837bcdfe21b", link: "https://discord.com/settings/premium" }
 ];
 
+interface CatalogTier {
+    key: string;
+    name: string;
+    owned: boolean;
+    simple_icon_url: string;
+    complex_icon_static_url: string;
+    requirements: never[];
+}
+
+interface CatalogBadge {
+    badge_id: string;
+    name: string;
+    description: string;
+    owned: boolean;
+    current_tier: string;
+    next_tier: null;
+    simple_icon_url: string;
+    tiers: CatalogTier[];
+}
+
+interface CatalogBadges {
+    earnable: unknown[];
+    owned: unknown[];
+}
+
+// Same cosmetic badges, shaped like the badge objects used by Discord's "Your badges" panel
+const CATALOG_BADGES: CatalogBadge[] = BADGES.map(b => {
+    const icon = `${ICON_URL}${b.icon}.png`;
+    return {
+        badge_id: `my_badges_${b.id}`,
+        name: b.description,
+        description: b.description,
+        owned: true,
+        current_tier: "default",
+        next_tier: null,
+        simple_icon_url: icon,
+        tiers: [{
+            key: "default",
+            name: b.description,
+            owned: true,
+            simple_icon_url: icon,
+            complex_icon_static_url: icon,
+            requirements: []
+        }]
+    };
+});
+
 const Badge: ProfileBadge = {
     id: "my_badges_profile_badge",
     position: BadgePosition.START,
@@ -55,9 +102,32 @@ const Badge: ProfileBadge = {
 
 export default definePlugin({
     name: "MyBadges",
-    description: "Shows the Discord profile badges on your own profile (visible only to you, cosmetic)",
+    description: "Shows the Discord profile badges on your own profile and in your \"Your badges\" panel (visible only to you, cosmetic)",
     authors: [Devs.Arkromin],
     enabledByDefault: true,
+
+    patches: [
+        {
+            // Discord's "Your badges" panel: add our badges to the list of owned badges (own panel only)
+            find: '"BadgeDirectoryPanel"',
+            replacement: {
+                match: /(displayedUserId:(\i),.{0,400}?\{earnable:\i,owned:\i\}=\i\.useMemo\(\(\)=>)(\(0,\i\.\i\)\(\i\))/,
+                replace: "$1$self.addCatalogBadges($3,$2)"
+            }
+        }
+    ],
+
+    addCatalogBadges(result: CatalogBadges, userId?: string): CatalogBadges {
+        try {
+            if (!userId || userId !== UserStore.getCurrentUser()?.id) return result;
+
+            const known = new Set(result.owned.map((b: any) => b?.badge_id));
+            const extra = CATALOG_BADGES.filter(b => !known.has(b.badge_id));
+            return { ...result, owned: [...result.owned, ...extra] };
+        } catch {
+            return result;
+        }
+    },
 
     start: () => addProfileBadge(Badge),
     stop: () => removeProfileBadge(Badge)
