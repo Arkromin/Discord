@@ -20,13 +20,13 @@ import "./styles.css";
 
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { UpdateButton } from "@plugins/quickUpdate/UpdateButton";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findComponentByCodeLazy } from "@webpack";
 import { Popout, useRef, useState } from "@webpack/common";
 import type { PropsWithChildren } from "react";
 
-import { UpdateButton } from "../quickUpdate/UpdateButton";
 import { renderPopout } from "./menu";
 
 const HeaderBarIcon = findComponentByCodeLazy(".HEADER_BAR_BADGE_BOTTOM,", 'position:"bottom"');
@@ -99,7 +99,7 @@ export default definePlugin({
     TrailingWrapper({ children }: PropsWithChildren) {
         return (
             <>
-                {children}
+		<ErrorBoundary key="vc-toolbox" noop>
                 <ErrorBoundary key="vc-toolbox" noop>
                     <DiscordPopoutButton />
                 </ErrorBoundary>
