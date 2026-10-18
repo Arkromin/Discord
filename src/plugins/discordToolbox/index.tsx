@@ -99,6 +99,7 @@ export default definePlugin({
     TrailingWrapper({ children }: PropsWithChildren) {
         return (
             <>
+		{children}
 		<ErrorBoundary key="vc-toolbox" noop>
                     <DiscordPopoutButton />
                 </ErrorBoundary>
