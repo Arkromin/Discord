@@ -57,7 +57,7 @@ async function calculateGitChanges() {
 }
 
 async function fetchUpdates() {
-    const data = await githubGet("/releases/latest");
+    const data = await githubGet("/releases/tags/devbuild");
 
     const hash = data.name.slice(data.name.lastIndexOf(" ") + 1);
     if (hash === gitHash)
