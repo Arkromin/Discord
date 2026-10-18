@@ -321,7 +321,7 @@ function PluginSettings() {
             </ErrorBoundary>
 
             <HeadingTertiary className={Margins.top20}>Plugins</HeadingTertiary>
-	
+
             <BulkToggle
                 plugins={sortedPlugins.filter(p =>
                     !p.hidden
