@@ -100,7 +100,6 @@ export default definePlugin({
         return (
             <>
 		<ErrorBoundary key="vc-toolbox" noop>
-                <ErrorBoundary key="vc-toolbox" noop>
                     <DiscordPopoutButton />
                 </ErrorBoundary>
                 <ErrorBoundary key="vc-quickupdate" noop>
