@@ -41,6 +41,7 @@ import { JSX } from "react";
 
 import Plugins, { ExcludedPlugins, PluginMeta } from "~plugins";
 
+import { BulkToggle } from "./BulkToggle";
 import { PluginCard } from "./PluginCard";
 import { UIElementsButton } from "./UIElements";
 
@@ -320,6 +321,16 @@ function PluginSettings() {
             </ErrorBoundary>
 
             <HeadingTertiary className={Margins.top20}>Plugins</HeadingTertiary>
+		
+            <BulkToggle
+                plugins={sortedPlugins.filter(p =>
+                    !p.hidden
+                    && !(!p.settings && p.name.endsWith("API") && !showApi)
+                    && pluginFilter(p)
+                    && !(p.required || p.isDependency || depMap[p.name]?.some(d => settings.plugins[d].enabled))
+                )}
+                onRestartNeeded={(name, key) => changes.handleChange(`${name}.${key}`)}
+            />
 
             {plugins.length || requiredPlugins.length
                 ? (
