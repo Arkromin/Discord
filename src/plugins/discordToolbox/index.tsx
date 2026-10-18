@@ -26,6 +26,7 @@ import { findComponentByCodeLazy } from "@webpack";
 import { Popout, useRef, useState } from "@webpack/common";
 import type { PropsWithChildren } from "react";
 
+import { UpdateButton } from "../quickUpdate/UpdateButton";
 import { renderPopout } from "./menu";
 
 const HeaderBarIcon = findComponentByCodeLazy(".HEADER_BAR_BADGE_BOTTOM,", 'position:"bottom"');
@@ -101,6 +102,9 @@ export default definePlugin({
                 {children}
                 <ErrorBoundary key="vc-toolbox" noop>
                     <DiscordPopoutButton />
+                </ErrorBoundary>
+                <ErrorBoundary key="vc-quickupdate" noop>
+                    <UpdateButton />
                 </ErrorBoundary>
             </>
         );

@@ -57,7 +57,7 @@ async function installUpdate() {
     }
 }
 
-async function manualUpdate() {
+export async function manualUpdate() {
     if (IS_UPDATER_DISABLED) {
         showToast("Les mises à jour sont désactivées dans cette version");
         return;
