@@ -20,6 +20,7 @@ import "./styles.css";
 
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
+import { AiButton } from "@plugins/aiChat/ui";
 import { UpdateButton } from "@plugins/quickUpdate/UpdateButton";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
@@ -105,6 +106,9 @@ export default definePlugin({
                 </ErrorBoundary>
                 <ErrorBoundary key="vc-quickupdate" noop>
                     <UpdateButton />
+                </ErrorBoundary>
+                <ErrorBoundary key="vc-aichat" noop>
+                    <AiButton />
                 </ErrorBoundary>
             </>
         );
