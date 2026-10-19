@@ -8,7 +8,7 @@ import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, 
 import { Devs } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
 import definePlugin from "@utils/types";
-import { showToast } from "@webpack/common";
+import { MessageStore, showToast } from "@webpack/common";
 
 import { askAI, openChat, settings } from "./ui";
 
@@ -28,6 +28,31 @@ function splitMessage(text: string, max = 1900): string[] {
 
     if (rest) parts.push(rest);
     return parts;
+}
+
+const SUMMARY_LIMIT = 20000;
+
+// Builds a plain text version of the last messages already loaded in the channel
+function buildTranscript(channelId: string, count: number): string {
+    const all: any[] = MessageStore.getMessages(channelId)?._array ?? [];
+
+    const lines = all
+        .filter(m => m.type === 0 || m.type === 19)
+        .slice(-count)
+        .map(m => {
+            const time = new Date(m.timestamp).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+            const name = m.author?.globalName ?? m.author?.username ?? "?";
+            const content = String(m.content ?? "").replace(/\s+/g, " ").slice(0, 500);
+            const extra = m.attachments?.length ? " [pièce jointe]" : "";
+
+            return `[${time}] ${name}: ${content}${extra}`.trim();
+        })
+        .filter(line => !line.endsWith(": "));
+
+    let transcript = lines.join("\n");
+    if (transcript.length > SUMMARY_LIMIT) transcript = transcript.slice(-SUMMARY_LIMIT);
+
+    return transcript;
 }
 
 export default definePlugin({
@@ -83,6 +108,59 @@ export default definePlugin({
                 for (const part of splitMessage(`${quoted}\n${answer}`)) {
                     if (prive) sendBotMessage(ctx.channel.id, { content: part });
                     else await sendMessage(ctx.channel.id, { content: part });
+                }
+            }
+        },
+        {
+            name: "resume",
+            description: "Résume les derniers messages du salon (ils sont envoyés à Google Gemini)",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    name: "messages",
+                    description: "Combien de messages résumer (10 à 100, 50 par défaut)",
+                    type: ApplicationCommandOptionType.INTEGER,
+                    required: false
+                },
+                {
+                    name: "publique",
+                    description: "Envoyer le résumé dans le salon (sinon il est visible seulement par toi)",
+                    type: ApplicationCommandOptionType.BOOLEAN,
+                    required: false
+                }
+            ],
+
+            execute: async (args, ctx) => {
+                const count = Math.min(100, Math.max(10, findOption<number>(args, "messages", 50)));
+                const publique = findOption<boolean>(args, "publique", false);
+
+                const transcript = buildTranscript(ctx.channel.id, count);
+                if (!transcript) {
+                    sendBotMessage(ctx.channel.id, { content: "⚠️ Aucun message à résumer dans ce salon." });
+                    return;
+                }
+
+                showToast("Résumé en cours...");
+
+                let answer: string;
+                try {
+                    answer = await askAI([], [
+                        "Résume cette conversation Discord en français.",
+                        "Donne les points importants, les décisions prises et les questions restées sans réponse.",
+                        "Reste court et clair. Voici les messages :",
+                        "",
+                        transcript
+                    ].join("\n"));
+                } catch (e) {
+                    sendBotMessage(ctx.channel.id, {
+                        content: `⚠️ ${e instanceof Error ? e.message : String(e)}`
+                    });
+                    return;
+                }
+
+                for (const part of splitMessage(`📝 **Résumé des derniers messages**\n${answer}`)) {
+                    if (publique) await sendMessage(ctx.channel.id, { content: part });
+                    else sendBotMessage(ctx.channel.id, { content: part });
                 }
             }
         }
