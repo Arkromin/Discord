@@ -6,13 +6,15 @@
 
 import { Devs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
-import definePlugin from "@utils/types";
+import definePlugin, { PluginNative } from "@utils/types";
 import { findStoreLazy } from "@webpack";
 import { FluxDispatcher, IconUtils, UserStore } from "@webpack/common";
 
 import { onSettingsChange, settings } from "./settings";
 
 const logger = new Logger("LocalProfile");
+
+const Native = VencordNative.pluginHelpers.LocalProfile as PluginNative<typeof import("./native")>;
 
 const ProfileStore: any = findStoreLazy("UserProfileStore");
 
@@ -22,8 +24,9 @@ const MARK = "vc-local-banner";
 // 1x1 transparent GIF. The mark lets us find the banner element to put a video in it.
 const PLACEHOLDER = `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7#${MARK}`;
 
-const originals: { avatar?: any; banner?: any; profile?: any; profileHadOwn?: boolean; } = {};
-const wrappers: { avatar?: any; banner?: any; profile?: any; } = {};
+const originals: { avatar?: any; profile?: any; profileHadOwn?: boolean; } = {};
+const wrappers: { avatar?: any; profile?: any; } = {};
+const videoSources = new Map<string, Promise<string>>();
 
 let active = false;
 let lastUser: any;
@@ -67,13 +70,31 @@ function nameStyle() {
 
 // ----- Banner video -----
 
+// The whole file is downloaded once and played from memory, partial requests to some hosts fail
+function videoSource(url: string): Promise<string> {
+    let source = videoSources.get(url);
+
+    if (!source) {
+        source = Native.fetchMedia(url).then(({ status, type, data }) => {
+            if (status !== 200) throw new Error(`Could not download the video (code ${status})`);
+
+            const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
+            return URL.createObjectURL(new Blob([bytes], { type }));
+        });
+
+        videoSources.set(url, source);
+        source.catch(() => videoSources.delete(url));
+    }
+
+    return source;
+}
+
 function attachVideo(el: Element, url: string) {
     if (el.hasAttribute("data-vc-video")) return;
     el.setAttribute("data-vc-video", "1");
 
     const video = document.createElement("video");
     video.setAttribute("data-vc-banner-video", "1");
-    video.src = url;
     video.autoplay = true;
     video.loop = true;
     video.muted = true;
@@ -89,7 +110,16 @@ function attachVideo(el: Element, url: string) {
     if (el instanceof HTMLImageElement) el.insertAdjacentElement("afterend", video);
     else el.appendChild(video);
 
-    video.play().catch(() => { });
+    videoSource(url)
+        .then(src => {
+            video.src = src;
+            return video.play();
+        })
+        .catch(e => {
+            logger.error("Banner video failed", e);
+            video.src = url;
+            video.play().catch(() => { });
+        });
 }
 
 function scanBanners() {
@@ -108,6 +138,11 @@ function scheduleScan() {
 function clearVideos() {
     document.querySelectorAll("video[data-vc-banner-video]").forEach(v => v.remove());
     document.querySelectorAll("[data-vc-video]").forEach(el => el.removeAttribute("data-vc-video"));
+}
+
+function releaseVideoSources() {
+    videoSources.forEach(source => source.then(src => URL.revokeObjectURL(src), () => { }));
+    videoSources.clear();
 }
 
 // ----- Apply -----
@@ -172,11 +207,31 @@ export default definePlugin({
     authors: [Devs.Arkromin],
     settings,
 
+    patches: [
+        {
+            // The profile card builds the banner address without going through IconUtils, so the function itself is patched
+            find: ".USER_BANNER(",
+            replacement: {
+                match: /(function \i\((\i)\)\{let \i,\{id:(\i),banner:(\i),canAnimate:\i,size:\i\}=\2;)/,
+                replace: "$1const _vcb=$self.bannerOverride($3,$4);if(_vcb!==void 0)return _vcb;"
+            }
+        }
+    ],
+
+    bannerOverride(id: string, banner: string) {
+        const url = clean(settings.store.bannerUrl);
+
+        if (active && url && id != null && id === me()?.id && banner === FAKE_BANNER) {
+            return isVideo(url) ? PLACEHOLDER : url;
+        }
+
+        return undefined;
+    },
+
     start() {
         active = true;
 
         originals.avatar = (IconUtils as any).getUserAvatarURL;
-        originals.banner = (IconUtils as any).getUserBannerURL;
 
         wrappers.avatar = function (this: any, user: any, ...rest: any[]) {
             const url = clean(settings.store.avatarUrl);
@@ -184,16 +239,7 @@ export default definePlugin({
             return originals.avatar.call(this, user, ...rest);
         };
 
-        wrappers.banner = function (this: any, data: any, ...rest: any[]) {
-            const url = clean(settings.store.bannerUrl);
-            if (active && url && data?.id != null && data.id === me()?.id && data.banner === FAKE_BANNER) {
-                return isVideo(url) ? PLACEHOLDER : url;
-            }
-            return originals.banner.call(this, data, ...rest);
-        };
-
         (IconUtils as any).getUserAvatarURL = wrappers.avatar;
-        (IconUtils as any).getUserBannerURL = wrappers.banner;
 
         originals.profileHadOwn = Object.prototype.hasOwnProperty.call(ProfileStore, "getUserProfile");
         originals.profile = ProfileStore.getUserProfile;
@@ -244,7 +290,6 @@ export default definePlugin({
         // Only undo what is still ours, other plugins may have wrapped these functions after us.
         // The wrappers do nothing once the plugin is stopped.
         if ((IconUtils as any).getUserAvatarURL === wrappers.avatar) (IconUtils as any).getUserAvatarURL = originals.avatar;
-        if ((IconUtils as any).getUserBannerURL === wrappers.banner) (IconUtils as any).getUserBannerURL = originals.banner;
 
         if (ProfileStore.getUserProfile === wrappers.profile) {
             if (originals.profileHadOwn) ProfileStore.getUserProfile = originals.profile;
@@ -253,6 +298,7 @@ export default definePlugin({
 
         restore();
         clearVideos();
+        releaseVideoSources();
 
         UserStore.emitChange();
         ProfileStore.emitChange();
