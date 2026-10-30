@@ -22,7 +22,7 @@ import { exportSettings, importSettings } from "@api/SettingsSync/offline";
 import { Flex } from "@components/Flex";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { Button, Text, showToast, useEffect, useState } from "@webpack/common";
+import { Button, showToast, Text, useEffect, useState } from "@webpack/common";
 
 interface Snapshot {
     id: number;
