@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { Logger } from "@utils/Logger";
 import { ModuleFactory } from "@discord/discord-types/webpack";
+import { Logger } from "@utils/Logger";
 import * as Webpack from "@webpack";
 import { wreq } from "@webpack";
 import { AnyModuleFactory } from "@webpack/types";
