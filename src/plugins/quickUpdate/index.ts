@@ -15,13 +15,15 @@ import { showToast } from "@webpack/common";
 
 const logger = new Logger("QuickUpdate");
 
-const DAY = 24 * 60 * 60 * 1000;
-const STARTUP_DELAY = 15 * 1000;
+const MINUTE = 60 * 1000;
+const STARTUP_DELAY = 5 * 1000;
+const CHECK_EVERY = 20 * MINUTE;
+const MIN_GAP = 5 * MINUTE;
 
 const settings = definePluginSettings({
     dailyCheck: {
         type: OptionType.BOOLEAN,
-        description: "Check for updates at startup and every 24 hours, then show it on the update icon (it never installs on its own)",
+        description: "Vérifie les mises à jour au démarrage puis toutes les 20 minutes, et passe l'icône au vert quand une version est disponible (rien ne s'installe tout seul)",
         default: true
     }
 });
@@ -29,6 +31,7 @@ const settings = definePluginSettings({
 let interval: ReturnType<typeof setInterval> | undefined;
 let startupTimeout: ReturnType<typeof setTimeout> | undefined;
 let updating = false;
+let lastCheck = 0;
 
 // Whether a newer version exists. The update icon in the titlebar listens to it.
 let available = false;
@@ -50,18 +53,27 @@ function setAvailable(value: boolean) {
     listeners.forEach(listener => listener(value));
 }
 
+// Un toast qui ne doit jamais bloquer la mise à jour : s'il échoue, on passe par une notification
+function say(message: string, type: "message" | "success" | "failure" = "message") {
+    try {
+        showToast(message, type);
+    } catch {
+        showNotification({ title: message, body: "", noPersist: true });
+    }
+}
+
 async function installUpdate() {
     if (updating) return;
     updating = true;
 
     try {
-        showToast("Mise à jour en cours...");
+        say("Mise à jour en cours...");
         await update();
-        showToast("Mise à jour installée, redémarrage...");
+        say("Mise à jour installée, redémarrage...", "success");
         setTimeout(relaunch, 1500);
     } catch (e) {
         logger.error("Update failed", e);
-        showToast("La mise à jour a échoué (détails dans la console)", "failure");
+        say("La mise à jour a échoué (détails dans la console)", "failure");
     } finally {
         updating = false;
     }
@@ -69,33 +81,35 @@ async function installUpdate() {
 
 export async function manualUpdate() {
     if (IS_UPDATER_DISABLED) {
-        showToast("Les mises à jour sont désactivées dans cette version");
+        say("Les mises à jour sont désactivées dans cette version");
         return;
     }
 
     try {
-        showToast("Recherche de mises à jour...");
+        say("Recherche de mises à jour...");
         const outdated = await checkForUpdates();
+        lastCheck = Date.now();
         setAvailable(outdated);
 
         if (!outdated) {
-            showToast("Tu es déjà à jour");
+            say("Tu es déjà à jour", "success");
             return;
         }
 
         await installUpdate();
     } catch (e) {
         logger.error("Update check failed", e);
-        showToast("Impossible de vérifier les mises à jour (détails dans la console)", "failure");
+        say("Impossible de vérifier les mises à jour (détails dans la console)", "failure");
     }
 }
 
 async function backgroundCheck() {
-    if (IS_UPDATER_DISABLED || !settings.store.dailyCheck) return;
+    if (IS_UPDATER_DISABLED || !settings.store.dailyCheck || updating) return;
 
     try {
         const wasAvailable = available;
         const outdated = await checkForUpdates();
+        lastCheck = Date.now();
         setAvailable(outdated);
 
         // Only notify once per new version, not on every check
@@ -113,9 +127,14 @@ async function backgroundCheck() {
     }
 }
 
+// Quand tu reviens sur la fenêtre, on revérifie (au plus une fois toutes les 5 minutes)
+function onFocus() {
+    if (Date.now() - lastCheck >= MIN_GAP) backgroundCheck();
+}
+
 export default definePlugin({
     name: "QuickUpdate",
-    description: "Adds an update button to the titlebar and the Discord Toolbox. The icon changes when a new version is available (checked at startup and every 24 hours, optional). Updates are never installed unless you click.",
+    description: "Adds an update button to the titlebar and the Discord Toolbox. The icon turns green on its own when a new version is available (checked at startup, every 20 minutes and when you come back to the window). Updates are never installed unless you click.",
     tags: ["Utility"],
     authors: [Devs.Arkromin],
     settings,
@@ -126,12 +145,14 @@ export default definePlugin({
 
     start() {
         startupTimeout = setTimeout(backgroundCheck, STARTUP_DELAY);
-        interval = setInterval(backgroundCheck, DAY);
+        interval = setInterval(backgroundCheck, CHECK_EVERY);
+        window.addEventListener("focus", onFocus);
     },
 
     stop() {
         clearTimeout(startupTimeout);
         clearInterval(interval);
+        window.removeEventListener("focus", onFocus);
         startupTimeout = undefined;
         interval = undefined;
         setAvailable(false);

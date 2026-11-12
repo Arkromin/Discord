@@ -85,24 +85,23 @@ export interface ToastOptions {
     duration?: number;
 }
 
-export const Toasts: t.Toasts = mapMangledModuleLazy(".currentToastMap.has(", {
-    show: filters.byCode(".currentToastMap.has("),
-    pop: filters.byCode(".delete(")
-});
+// Discord a changé l'API des toasts : la fonction qui affiche un toast se trouve maintenant directement par son code.
+// On garde l'ancienne signature showToast(message, type, options) pour que tous les plugins continuent de marcher.
+type RawToast = (data: { text: string; variant?: "default" | "success" | "critical"; position?: "top" | "bottom"; duration?: number; }) => void;
 
-export const createToast: t.createToast = findByCodeLazy('variant:"default",icon:', ".duration");
+const showToastRaw: RawToast = findByCodeLazy(".currentToastMap.has(");
+
+export const Toasts = {
+    show: showToastRaw,
+    pop: () => { }
+} as unknown as t.Toasts;
 
 /**
- * Show a simple toast. If you need more options, use Toasts.show manually
+ * Show a simple toast.
  */
 export function showToast(message: string, type: t.ToastType = "message", options?: ToastOptions) {
-    // FIXME once Discord makes up their mind and stops changing this API every update
-    try {
-        Toasts.show(createToast(message, type, options));
-    } catch {
-        // @ts-ignore
-        Toasts.show({ text: message, variant: type });
-    }
+    const variant = type === "success" ? "success" : type === "failure" ? "critical" : "default";
+    showToastRaw({ text: message, variant, duration: options?.duration });
 }
 
 export const UserUtils = {
