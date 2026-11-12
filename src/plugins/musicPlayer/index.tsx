@@ -20,6 +20,7 @@ import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, 
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
+import MiniPlayer from "./miniPlayer";
 import { player } from "./player";
 import { settings } from "./settings";
 import { PRESET_RADIOS, searchMusic, searchRadios } from "./sources";
@@ -29,9 +30,22 @@ const say = (channelId: string, content: string) => sendBotMessage(channelId, { 
 
 export default definePlugin({
     name: "MusicPlayer",
-    description: "Écoute de la musique (Audius, sans pub) et des radios en direct avec une commande ou un lecteur. Le son n'est joué que chez toi.",
+    description: "Écoute de la musique (Audius, sans pub) et des radios en direct avec une commande, un lecteur ou le mini-lecteur de la barre du haut. Le son n'est joué que chez toi.",
     authors: [Devs.Arkromin],
     settings,
+
+    patches: [
+        {
+            // Ajoute le bouton de musique dans la barre du haut, sans dépendre de Discord Toolbox
+            find: '?"BACK_FORWARD_NAVIGATION":',
+            replacement: {
+                match: /(?<=trailing:.{0,150}?,\{children:\[)/,
+                replace: "$self.MiniPlayer(),"
+            }
+        }
+    ],
+
+    MiniPlayer,
 
     stop() {
         player.destroy();

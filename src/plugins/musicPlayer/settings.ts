@@ -20,6 +20,11 @@ import { definePluginSettings } from "@api/Settings";
 import { OptionType } from "@utils/types";
 
 export const settings = definePluginSettings({
+    showMiniPlayer: {
+        type: OptionType.BOOLEAN,
+        description: "Afficher le mini-lecteur (bouton de musique) dans la barre du haut",
+        default: true
+    },
     country: {
         type: OptionType.STRING,
         description: "Pays des radios proposées en premier (code à 2 lettres : FR, BE, CH, CA, US...)",
