@@ -4,10 +4,23 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { del, get, set } from "@api/DataStore";
 import { definePluginSettings } from "@api/Settings";
 import { OptionType } from "@utils/types";
+import { chooseFile } from "@utils/web";
 import { findLazy } from "@webpack";
+import { Button, showToast, Text, useEffect, useState } from "@webpack/common";
 
+export const AVATAR_KEY = "LocalProfile_avatar";
+export const BANNER_KEY = "LocalProfile_banner";
+
+export interface StoredFile {
+    name: string;
+    type: string;
+    blob: Blob;
+}
+
+// Réglages (couleurs, style du pseudo)
 const listeners = new Set<() => void>();
 
 export function onSettingsChange(listener: () => void) {
@@ -20,6 +33,18 @@ export function onSettingsChange(listener: () => void) {
 const notify = () => {
     setTimeout(() => listeners.forEach(listener => listener()), 0);
 };
+
+// Fichiers choisis (avatar, bannière)
+const fileListeners = new Set<() => void>();
+
+export function onFilesChange(listener: () => void) {
+    fileListeners.add(listener);
+    return () => {
+        fileListeners.delete(listener);
+    };
+}
+
+const notifyFiles = () => fileListeners.forEach(listener => listener());
 
 const FontEnum: any = findLazy(m => m?.CHERRY_BOMB !== undefined && m?.KALAM !== undefined);
 
@@ -45,6 +70,78 @@ const fieldStyle = {
     background: "var(--background-base-lowest, #1e1f22)",
     color: "var(--text-default, #dbdee1)"
 };
+
+interface FileRowProps {
+    label: string;
+    storeKey: string;
+    accept: string;
+    maxMb: number;
+    hint: string;
+}
+
+function FileRow({ label, storeKey, accept, maxMb, hint }: FileRowProps) {
+    const [info, setInfo] = useState("...");
+
+    const refresh = () => get<StoredFile>(storeKey).then(file => {
+        setInfo(file?.blob ? `${file.name} (${(file.blob.size / 1048576).toFixed(1)} Mo)` : "Aucun fichier (ton vrai profil est utilisé)");
+    });
+
+    useEffect(() => { refresh(); }, []);
+
+    async function pick() {
+        const file = await chooseFile(accept);
+        if (!file) return;
+
+        if (file.size > maxMb * 1048576) {
+            showToast(`Fichier trop gros (${maxMb} Mo maximum)`, "failure");
+            return;
+        }
+
+        await set(storeKey, { name: file.name, type: file.type, blob: file } satisfies StoredFile);
+        notifyFiles();
+        refresh();
+        showToast(`${label} enregistré`, "success");
+    }
+
+    async function remove() {
+        await del(storeKey);
+        notifyFiles();
+        refresh();
+    }
+
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <Text variant="text-md/semibold">{label}</Text>
+            <Text variant="text-xs/normal">{hint}</Text>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                <Button size={Button.Sizes.SMALL} onClick={() => pick()}>Choisir un fichier</Button>
+                <Button size={Button.Sizes.SMALL} color={Button.Colors.RED} onClick={() => remove()}>Retirer</Button>
+                <Text variant="text-sm/normal">{info}</Text>
+            </div>
+        </div>
+    );
+}
+
+function FilePicker() {
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "8px" }}>
+            <FileRow
+                label="Avatar animé"
+                storeKey={AVATAR_KEY}
+                accept="image/*"
+                maxMb={15}
+                hint="Une image ou un GIF (15 Mo maximum). Le fichier reste sur ton ordinateur."
+            />
+            <FileRow
+                label="Bannière"
+                storeKey={BANNER_KEY}
+                accept="image/*,video/mp4,video/webm"
+                maxMb={60}
+                hint="Une image, un GIF ou une vidéo mp4/webm (60 Mo maximum). Le fichier reste sur ton ordinateur."
+            />
+        </div>
+    );
+}
 
 function StyleEditor() {
     const { nameStyleEnabled, nameFont, nameEffect, nameColors } =
@@ -98,17 +195,9 @@ function StyleEditor() {
 }
 
 export const settings = definePluginSettings({
-    avatarUrl: {
-        type: OptionType.STRING,
-        description: "Avatar animé : lien vers un GIF ou une image (vide = ton vrai avatar)",
-        default: "",
-        onChange: notify
-    },
-    bannerUrl: {
-        type: OptionType.STRING,
-        description: "Bannière : lien vers une image, un GIF ou une vidéo mp4/webm (vide = ta vraie bannière)",
-        default: "",
-        onChange: notify
+    files: {
+        type: OptionType.COMPONENT,
+        component: FilePicker
     },
     themePrimary: {
         type: OptionType.STRING,

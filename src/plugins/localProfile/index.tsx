@@ -4,41 +4,51 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { get } from "@api/DataStore";
 import { Devs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
-import definePlugin, { PluginNative } from "@utils/types";
+import definePlugin from "@utils/types";
 import { findStoreLazy } from "@webpack";
 import { FluxDispatcher, IconUtils, UserStore } from "@webpack/common";
 
-import { onSettingsChange, settings } from "./settings";
+import { AVATAR_KEY, BANNER_KEY, onFilesChange, onSettingsChange, settings, StoredFile } from "./settings";
 
 const logger = new Logger("LocalProfile");
-
-const Native = VencordNative.pluginHelpers.LocalProfile as PluginNative<typeof import("./native")>;
 
 const ProfileStore: any = findStoreLazy("UserProfileStore");
 
 const EVENTS = ["CONNECTION_OPEN", "CURRENT_USER_UPDATE", "USER_UPDATE"];
 const FAKE_BANNER = "vc_local_banner";
 const MARK = "vc-local-banner";
+const BANNER_SELECTOR = `[style*="${MARK}"], img[src*="${MARK}"]`;
 // 1x1 transparent GIF. The mark lets us find the banner element to put a video in it.
 const PLACEHOLDER = `data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7#${MARK}`;
 
+interface Media {
+    url: string;
+    video: boolean;
+}
+
 const originals: { avatar?: any; profile?: any; profileHadOwn?: boolean; } = {};
 const wrappers: { avatar?: any; profile?: any; } = {};
-const videoSources = new Map<string, Promise<string>>();
 
 let active = false;
 let lastUser: any;
 let realBanner: any;
 let realStyles: any;
+let avatar: Media | null = null;
+let banner: Media | null = null;
+let loadToken = 0;
 let observer: MutationObserver | undefined;
 let scanTimer: ReturnType<typeof setTimeout> | undefined;
 let unsubscribeSettings: (() => void) | undefined;
+let unsubscribeFiles: (() => void) | undefined;
+
+// Un seul profil enveloppé par version des réglages, pour ne pas recréer un objet à chaque appel
+let profileCache = new WeakMap<object, any>();
 
 const me = (): any => UserStore.getCurrentUser();
 const clean = (value: string) => (value ?? "").trim();
-const isVideo = (url: string) => /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(url);
 
 function hexToInt(value: string): number | null {
     const hex = clean(value).replace(/^#/, "");
@@ -68,26 +78,39 @@ function nameStyle() {
     };
 }
 
-// ----- Banner video -----
+// ----- Files -----
 
-// The whole file is downloaded once and played from memory, partial requests to some hosts fail
-function videoSource(url: string): Promise<string> {
-    let source = videoSources.get(url);
+function freeMedia(media: Media | null) {
+    if (media) URL.revokeObjectURL(media.url);
+}
 
-    if (!source) {
-        source = Native.fetchMedia(url).then(({ status, type, data }) => {
-            if (status !== 200) throw new Error(`Could not download the video (code ${status})`);
+async function loadMedia(key: string): Promise<Media | null> {
+    const file = await get<StoredFile>(key);
+    if (!file?.blob) return null;
 
-            const bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
-            return URL.createObjectURL(new Blob([bytes], { type }));
-        });
+    return { url: URL.createObjectURL(file.blob), video: file.type.startsWith("video/") };
+}
 
-        videoSources.set(url, source);
-        source.catch(() => videoSources.delete(url));
+async function loadFiles() {
+    const token = ++loadToken;
+    const [newAvatar, newBanner] = await Promise.all([loadMedia(AVATAR_KEY), loadMedia(BANNER_KEY)]);
+
+    if (token !== loadToken || !active) {
+        freeMedia(newAvatar);
+        freeMedia(newBanner);
+        return;
     }
 
-    return source;
+    freeMedia(avatar);
+    freeMedia(banner);
+    avatar = newAvatar;
+    banner = newBanner;
+
+    updateObserver();
+    apply();
 }
+
+// ----- Banner video -----
 
 function attachVideo(el: Element, url: string) {
     if (el.hasAttribute("data-vc-video")) return;
@@ -110,29 +133,19 @@ function attachVideo(el: Element, url: string) {
     if (el instanceof HTMLImageElement) el.insertAdjacentElement("afterend", video);
     else el.appendChild(video);
 
-    videoSource(url)
-        .then(src => {
-            video.src = src;
-            return video.play();
-        })
-        .catch(e => {
-            logger.error("Banner video failed", e);
-            video.src = url;
-            video.play().catch(() => { });
-        });
+    video.src = url;
+    video.play().catch(e => logger.error("Banner video failed", e));
 }
 
 function scanBanners() {
     scanTimer = undefined;
+    if (!active || !banner?.video) return;
 
-    const url = clean(settings.store.bannerUrl);
-    if (!active || !url || !isVideo(url)) return;
-
-    document.querySelectorAll(`[style*="${MARK}"], img[src*="${MARK}"]`).forEach(el => attachVideo(el, url));
+    document.querySelectorAll(BANNER_SELECTOR).forEach(el => attachVideo(el, banner!.url));
 }
 
 function scheduleScan() {
-    if (scanTimer === undefined) scanTimer = setTimeout(scanBanners, 250);
+    if (scanTimer === undefined) scanTimer = setTimeout(scanBanners, 150);
 }
 
 function clearVideos() {
@@ -140,9 +153,29 @@ function clearVideos() {
     document.querySelectorAll("[data-vc-video]").forEach(el => el.removeAttribute("data-vc-video"));
 }
 
-function releaseVideoSources() {
-    videoSources.forEach(source => source.then(src => URL.revokeObjectURL(src), () => { }));
-    videoSources.clear();
+// L'observateur ne tourne que si la bannière est une vidéo, et il ne regarde que les éléments ajoutés
+function updateObserver() {
+    const needed = active && !!banner?.video;
+
+    if (!needed) {
+        observer?.disconnect();
+        observer = undefined;
+        return;
+    }
+
+    if (observer) return;
+
+    observer = new MutationObserver(records => {
+        for (const record of records) {
+            for (const node of record.addedNodes) {
+                if (node instanceof Element && (node.matches(BANNER_SELECTOR) || node.querySelector(BANNER_SELECTOR))) {
+                    scheduleScan();
+                    return;
+                }
+            }
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 }
 
 // ----- Apply -----
@@ -151,6 +184,8 @@ function apply() {
     const user = me();
     if (!active || !user) return;
 
+    profileCache = new WeakMap();
+
     // Discord can replace the user object, in that case what we saved belongs to the old one
     if (user !== lastUser) {
         lastUser = user;
@@ -158,7 +193,7 @@ function apply() {
         realStyles = undefined;
     }
 
-    if (clean(settings.store.bannerUrl)) {
+    if (banner) {
         if (realBanner === undefined) realBanner = user.banner ?? null;
         user.banner = FAKE_BANNER;
     } else if (realBanner !== undefined) {
@@ -202,7 +237,7 @@ function restore() {
 
 export default definePlugin({
     name: "LocalProfile",
-    description: "Client-side only: use an animated avatar, a banner (image, GIF or video), a profile theme and a display name style on your own account. Only you can see them.",
+    description: "Client-side only: use an animated avatar, a banner (image, GIF or video from a file on your computer), a profile theme and a display name style on your own account. Only you can see them.",
     tags: ["Appearance"],
     authors: [Devs.Arkromin],
     settings,
@@ -218,11 +253,9 @@ export default definePlugin({
         }
     ],
 
-    bannerOverride(id: string, banner: string) {
-        const url = clean(settings.store.bannerUrl);
-
-        if (active && url && id != null && id === me()?.id && banner === FAKE_BANNER) {
-            return isVideo(url) ? PLACEHOLDER : url;
+    bannerOverride(id: string, bannerHash: string) {
+        if (active && banner && id != null && id === me()?.id && bannerHash === FAKE_BANNER) {
+            return banner.video ? PLACEHOLDER : banner.url;
         }
 
         return undefined;
@@ -234,8 +267,7 @@ export default definePlugin({
         originals.avatar = (IconUtils as any).getUserAvatarURL;
 
         wrappers.avatar = function (this: any, user: any, ...rest: any[]) {
-            const url = clean(settings.store.avatarUrl);
-            if (active && url && user?.id != null && user.id === me()?.id) return url;
+            if (active && avatar && user?.id != null && user.id === me()?.id) return avatar.url;
             return originals.avatar.call(this, user, ...rest);
         };
 
@@ -250,37 +282,44 @@ export default definePlugin({
             if (!active || !profile || id !== me()?.id) return profile;
 
             const colors = themeColors();
-            const hasBanner = !!clean(settings.store.bannerUrl);
+            const hasBanner = !!banner;
             if (!colors && !hasBanner) return profile;
 
-            return new Proxy(profile, {
-                get(target, key) {
-                    if (colors && key === "themeColors") return colors;
-                    if (colors && key === "premiumType") return 2;
-                    if (hasBanner && key === "banner") return FAKE_BANNER;
-                    return Reflect.get(target, key, target);
-                }
-            });
+            let wrapped = profileCache.get(profile);
+            if (!wrapped) {
+                wrapped = new Proxy(profile, {
+                    get(target, key) {
+                        if (colors && key === "themeColors") return colors;
+                        if (colors && key === "premiumType") return 2;
+                        if (hasBanner && key === "banner") return FAKE_BANNER;
+                        return Reflect.get(target, key, target);
+                    }
+                });
+                profileCache.set(profile, wrapped);
+            }
+
+            return wrapped;
         };
 
         ProfileStore.getUserProfile = wrappers.profile;
 
         for (const event of EVENTS) FluxDispatcher.subscribe(event, onUserEvent);
         unsubscribeSettings = onSettingsChange(apply);
+        unsubscribeFiles = onFilesChange(loadFiles);
 
-        observer = new MutationObserver(scheduleScan);
-        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style", "src"] });
-
-        apply();
+        loadFiles();
         logger.info("Started");
     },
 
     stop() {
         active = false;
+        loadToken++;
 
         for (const event of EVENTS) FluxDispatcher.unsubscribe(event, onUserEvent);
         unsubscribeSettings?.();
         unsubscribeSettings = undefined;
+        unsubscribeFiles?.();
+        unsubscribeFiles = undefined;
 
         observer?.disconnect();
         observer = undefined;
@@ -298,7 +337,11 @@ export default definePlugin({
 
         restore();
         clearVideos();
-        releaseVideoSources();
+
+        freeMedia(avatar);
+        freeMedia(banner);
+        avatar = null;
+        banner = null;
 
         UserStore.emitChange();
         ProfileStore.emitChange();
