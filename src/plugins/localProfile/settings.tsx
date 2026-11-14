@@ -9,7 +9,7 @@ import { definePluginSettings } from "@api/Settings";
 import { OptionType } from "@utils/types";
 import { chooseFile } from "@utils/web";
 import { findLazy } from "@webpack";
-import { Button, showToast, Text, useEffect, useState } from "@webpack/common";
+import { Button, ColorPicker, showToast, Text, useEffect, useState } from "@webpack/common";
 
 export const AVATAR_KEY = "LocalProfile_avatar";
 export const BANNER_KEY = "LocalProfile_banner";
@@ -146,15 +146,8 @@ function FilePicker() {
 const HEX = /^#[0-9a-f]{6}$/i;
 const validHex = (value: string) => HEX.test((value ?? "").trim());
 
-const swatchStyle = {
-    width: "44px",
-    height: "32px",
-    padding: 0,
-    border: "none",
-    borderRadius: "6px",
-    background: "none",
-    cursor: "pointer"
-};
+const toInt = (hex: string, fallback: number) => validHex(hex) ? parseInt(hex.slice(1), 16) : fallback;
+const toHex = (n: number | null) => n == null ? "" : "#" + n.toString(16).padStart(6, "0");
 
 const THEME_PRESETS: Array<{ name: string; primary: string; accent: string; }> = [
     { name: "Bleu nuit", primary: "#1f2a44", accent: "#5865f2" },
@@ -177,21 +170,11 @@ function ThemeEditor() {
 
             <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
                 <label style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <input
-                        type="color"
-                        style={swatchStyle}
-                        value={validHex(themePrimary) ? themePrimary : "#1f2a44"}
-                        onChange={e => { settings.store.themePrimary = e.currentTarget.value; }}
-                    />
+                    <ColorPicker color={toInt(themePrimary, 0x1f2a44)} showEyeDropper onChange={n => { settings.store.themePrimary = toHex(n); }} />
                     Couleur principale
                 </label>
                 <label style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <input
-                        type="color"
-                        style={swatchStyle}
-                        value={validHex(themeAccent) ? themeAccent : "#5865f2"}
-                        onChange={e => { settings.store.themeAccent = e.currentTarget.value; }}
-                    />
+                    <ColorPicker color={toInt(themeAccent, 0x5865f2)} showEyeDropper onChange={n => { settings.store.themeAccent = toHex(n); }} />
                     Couleur d'accent
                 </label>
                 <Button
@@ -243,12 +226,7 @@ function NameColors() {
         <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
             {colors.map((color, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                    <input
-                        type="color"
-                        style={swatchStyle}
-                        value={validHex(color) ? color : "#ffffff"}
-                        onChange={e => save(colors.map((c, j) => j === i ? e.currentTarget.value : c))}
-                    />
+                    <ColorPicker color={toInt(color, 0xffffff)} showEyeDropper onChange={n => save(colors.map((c, j) => j === i ? toHex(n) || c : c))} />
                     <Button
                         size={Button.Sizes.SMALL}
                         color={Button.Colors.PRIMARY}

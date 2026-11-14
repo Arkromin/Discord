@@ -21,7 +21,7 @@ import { definePluginSettings } from "@api/Settings";
 import { copyToClipboard } from "@utils/clipboard";
 import { OptionType } from "@utils/types";
 import { chooseFile } from "@utils/web";
-import { Button, showToast, Text } from "@webpack/common";
+import { Button, ColorPicker, showToast, Text } from "@webpack/common";
 
 export const STORE_KEY = "Wallpaper_file";
 const MAX_LOCAL_SIZE = 100 * 1024 * 1024;
@@ -163,12 +163,11 @@ function TintPicker() {
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "8px" }}>
             <Text variant="text-md/semibold">Couleur des panneaux</Text>
             <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-                <input
-                    type="color"
-                    aria-label="Couleur des panneaux"
-                    value={/^#[0-9a-f]{6}$/i.test(tint) ? tint : "#0b0d12"}
-                    onChange={e => { settings.store.tint = e.currentTarget.value; }}
-                    style={{ width: "44px", height: "32px", padding: 0, border: "none", borderRadius: "6px", background: "none", cursor: "pointer" }}
+                <ColorPicker
+                    color={/^#[0-9a-f]{6}$/i.test(tint) ? parseInt(tint.slice(1), 16) : 0x0b0d12}
+                    showEyeDropper
+                    suggestedColors={TINT_PRESETS.map(p => p.color)}
+                    onChange={n => { if (n != null) settings.store.tint = "#" + n.toString(16).padStart(6, "0"); }}
                 />
                 {TINT_PRESETS.map(preset => (
                     <button
