@@ -66,9 +66,14 @@ export const settings = definePluginSettings({
     },
     tint: {
         type: OptionType.STRING,
-        description: "Couleur des panneaux (hexadécimal, ex : #0b0d12 pour sombre, #f2f3f5 pour clair)",
+        description: "",
         default: "#0b0d12",
+        hidden: true,
         onChange: onStyle
+    },
+    tintPicker: {
+        type: OptionType.COMPONENT,
+        component: () => <TintPicker />
     },
     includeCards: {
         type: OptionType.BOOLEAN,
@@ -139,6 +144,52 @@ async function copyVariables() {
     const names = collectVariables();
     await copyToClipboard(names.join("\n"));
     showToast(`${names.length} variables copiées`, "success");
+}
+
+const TINT_PRESETS: Array<{ name: string; color: string; }> = [
+    { name: "Noir", color: "#0b0d12" },
+    { name: "Bleu nuit", color: "#0b1220" },
+    { name: "Violet", color: "#150b20" },
+    { name: "Vert foncé", color: "#0b1a14" },
+    { name: "Rouge foncé", color: "#200b0b" },
+    { name: "Gris", color: "#2b2d31" },
+    { name: "Clair", color: "#f2f3f5" }
+];
+
+function TintPicker() {
+    const { tint } = settings.use(["tint"]);
+
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "8px" }}>
+            <Text variant="text-md/semibold">Couleur des panneaux</Text>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                <input
+                    type="color"
+                    aria-label="Couleur des panneaux"
+                    value={/^#[0-9a-f]{6}$/i.test(tint) ? tint : "#0b0d12"}
+                    onChange={e => { settings.store.tint = e.currentTarget.value; }}
+                    style={{ width: "44px", height: "32px", padding: 0, border: "none", borderRadius: "6px", background: "none", cursor: "pointer" }}
+                />
+                {TINT_PRESETS.map(preset => (
+                    <button
+                        key={preset.color}
+                        type="button"
+                        title={preset.name}
+                        aria-label={preset.name}
+                        onClick={() => { settings.store.tint = preset.color; }}
+                        style={{
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "50%",
+                            cursor: "pointer",
+                            background: preset.color,
+                            border: tint.toLowerCase() === preset.color ? "3px solid var(--brand-500, #5865f2)" : "2px solid var(--border-subtle, #3f4147)"
+                        }}
+                    />
+                ))}
+            </div>
+        </div>
+    );
 }
 
 function Picker() {
