@@ -19,12 +19,22 @@
 import { Button, Modal, openModal, useEffect, useState } from "@webpack/common";
 
 import { player } from "./player";
+import { loadPlaylists, Playlist, playlists, shuffled } from "./playlists";
 import { PRESET_RADIOS, searchMusic, searchRadios, Track } from "./sources";
 
 function usePlayer() {
     const [, setTick] = useState(0);
     useEffect(() => player.subscribe(() => setTick(n => n + 1)), []);
     return player.getState();
+}
+
+function usePlaylists() {
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        loadPlaylists();
+        return playlists.subscribe(() => setTick(n => n + 1));
+    }, []);
+    return playlists.getAll();
 }
 
 function fmt(seconds: number) {
@@ -95,7 +105,70 @@ function PlayerBar() {
     );
 }
 
-type Mode = "music" | "radio";
+type Mode = "music" | "radio" | "playlists";
+
+const smallText = { opacity: 0.7, fontSize: "12px" } as const;
+const rowStyle = { display: "flex", alignItems: "center", gap: "8px", padding: "6px 8px", borderRadius: "6px", background: "var(--background-base-low, #232428)" } as const;
+
+function PlaylistsTab() {
+    const all = usePlaylists();
+    const [name, setName] = useState("");
+    const [openId, setOpenId] = useState<string | null>(null);
+
+    function create() {
+        const p = playlists.create(name);
+        if (p) { setName(""); setOpenId(p.id); }
+    }
+
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                    value={name}
+                    placeholder="Nom de la nouvelle playlist"
+                    onChange={e => setName(e.currentTarget.value)}
+                    onKeyDown={e => { if (e.key === "Enter") create(); }}
+                    style={inputStyle}
+                />
+                <Button onClick={create} disabled={!name.trim()}>Créer</Button>
+            </div>
+
+            {!all.length && <div style={{ opacity: 0.7 }}>Aucune playlist. Crée-en une, puis ajoute des morceaux depuis l'onglet Musique avec « + Playlist ».</div>}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "300px", overflowY: "auto" }}>
+                {all.map((p: Playlist) => (
+                    <div key={p.id} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        <div style={rowStyle}>
+                            <div style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => setOpenId(openId === p.id ? null : p.id)}>
+                                <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{openId === p.id ? "▾" : "▸"} {p.name}</div>
+                                <div style={smallText}>{p.tracks.length} morceau{p.tracks.length > 1 ? "x" : ""}</div>
+                            </div>
+                            <Button size={Button.Sizes.SMALL} disabled={!p.tracks.length} onClick={() => player.playList(p.tracks)}>Lire</Button>
+                            <Button size={Button.Sizes.SMALL} color={Button.Colors.PRIMARY} disabled={!p.tracks.length} onClick={() => player.playList(shuffled(p.tracks))}>Aléatoire</Button>
+                            <Button size={Button.Sizes.SMALL} color={Button.Colors.RED} onClick={() => playlists.remove(p.id)}>Supprimer</Button>
+                        </div>
+
+                        {openId === p.id && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "2px", paddingLeft: "16px" }}>
+                                {!p.tracks.length && <div style={smallText}>Vide.</div>}
+                                {p.tracks.map((t, i) => (
+                                    <div key={t.url + i} style={{ ...rowStyle, padding: "4px 8px" }}>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
+                                            <div style={smallText}>{t.subtitle}</div>
+                                        </div>
+                                        <Button size={Button.Sizes.SMALL} onClick={() => player.playList(p.tracks.slice(i))}>Lire</Button>
+                                        <Button size={Button.Sizes.SMALL} color={Button.Colors.PRIMARY} onClick={() => playlists.removeTrack(p.id, i)}>✕</Button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
 
 function PlayerModal({ rootProps }: { rootProps: any; }) {
     const [mode, setMode] = useState<Mode>("music");
@@ -103,6 +176,9 @@ function PlayerModal({ rootProps }: { rootProps: any; }) {
     const [results, setResults] = useState<Track[]>([]);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState("");
+    const all = usePlaylists();
+    const [targetId, setTargetId] = useState("");
+    const target = all.find(p => p.id === targetId) ?? all[0];
 
     async function search(text = query, m: Mode = mode) {
         const q = text.trim();
@@ -136,8 +212,10 @@ function PlayerModal({ rootProps }: { rootProps: any; }) {
                 <div style={{ display: "flex", gap: "8px" }}>
                     <Button color={mode === "music" ? Button.Colors.BRAND : Button.Colors.PRIMARY} onClick={() => changeMode("music")}>Musique</Button>
                     <Button color={mode === "radio" ? Button.Colors.BRAND : Button.Colors.PRIMARY} onClick={() => changeMode("radio")}>Radio</Button>
+                    <Button color={mode === "playlists" ? Button.Colors.BRAND : Button.Colors.PRIMARY} onClick={() => changeMode("playlists")}>Playlists</Button>
                 </div>
 
+                {mode === "playlists" ? <PlaylistsTab /> : <>
                 <div style={{ display: "flex", gap: "8px" }}>
                     <input
                         value={query}
@@ -162,6 +240,23 @@ function PlayerModal({ rootProps }: { rootProps: any; }) {
                     </div>
                 )}
 
+                {mode === "music" && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={smallText}>Ajouter à :</span>
+                        {all.length ? (
+                            <select
+                                value={target?.id ?? ""}
+                                onChange={e => setTargetId(e.currentTarget.value)}
+                                style={{ ...inputStyle, flex: "0 1 220px", padding: "6px 8px" }}
+                            >
+                                {all.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
+                        ) : (
+                            <Button size={Button.Sizes.SMALL} color={Button.Colors.PRIMARY} onClick={() => { const p = playlists.create("Ma playlist"); if (p) setTargetId(p.id); }}>Créer « Ma playlist »</Button>
+                        )}
+                    </div>
+                )}
+
                 {busy && <div style={{ opacity: 0.7 }}>Recherche...</div>}
                 {error && <div style={{ color: "var(--text-danger, #f23f43)" }}>{error}</div>}
 
@@ -176,9 +271,13 @@ function PlayerModal({ rootProps }: { rootProps: any; }) {
                             {t.kind === "music" && (
                                 <Button size={Button.Sizes.SMALL} color={Button.Colors.PRIMARY} onClick={() => player.enqueue(t)}>+ File</Button>
                             )}
+                            {t.kind === "music" && target && (
+                                <Button size={Button.Sizes.SMALL} color={Button.Colors.PRIMARY} onClick={() => playlists.addTrack(target.id, t)}>+ Playlist</Button>
+                            )}
                         </div>
                     ))}
                 </div>
+                </>}
             </div>
         </Modal>
     );

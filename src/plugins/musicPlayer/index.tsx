@@ -22,6 +22,7 @@ import definePlugin from "@utils/types";
 
 import MiniPlayer from "./miniPlayer";
 import { player } from "./player";
+import { loadPlaylists, playlists, shuffled } from "./playlists";
 import { settings } from "./settings";
 import { PRESET_RADIOS, searchMusic, searchRadios } from "./sources";
 import { openPlayer } from "./ui";
@@ -46,6 +47,10 @@ export default definePlugin({
     ],
 
     MiniPlayer,
+
+    start() {
+        loadPlaylists();
+    },
 
     stop() {
         player.destroy();
@@ -81,7 +86,7 @@ export default definePlugin({
                     if (!tracks.length) return say(ctx.channel.id, `🎵 Aucun résultat pour « ${query} ».`);
 
                     await player.playList(tracks.slice(0, 10));
-                    say(ctx.channel.id, `🎵 Lecture : **${tracks[0].title}** — ${tracks[0].subtitle}` + (tracks.length > 1 ? `\n${Math.min(tracks.length, 10) - 1} autres morceaux en file d'attente. Utilise /suivant pour passer.` : ""));
+                    say(ctx.channel.id, `🎵 Lecture : **${tracks[0].title}** - ${tracks[0].subtitle}` + (tracks.length > 1 ? `\n${Math.min(tracks.length, 10) - 1} autres morceaux en file d'attente. Utilise /suivant pour passer.` : ""));
                 } catch (e) {
                     say(ctx.channel.id, `⚠️ ${e instanceof Error ? e.message : String(e)}`);
                 }
@@ -110,6 +115,44 @@ export default definePlugin({
                 } catch (e) {
                     say(ctx.channel.id, `⚠️ ${e instanceof Error ? e.message : String(e)}`);
                 }
+            }
+        },
+        {
+            name: "playlist",
+            description: "Lance une de tes playlists (sans nom : affiche la liste)",
+            inputType: ApplicationCommandInputType.BUILT_IN,
+            options: [
+                {
+                    name: "nom",
+                    description: "Nom de la playlist",
+                    type: ApplicationCommandOptionType.STRING,
+                    required: false
+                },
+                {
+                    name: "aleatoire",
+                    description: "Mélanger les morceaux",
+                    type: ApplicationCommandOptionType.BOOLEAN,
+                    required: false
+                }
+            ],
+            execute: async (args, ctx) => {
+                await loadPlaylists();
+                const name = findOption<string>(args, "nom", "").trim();
+                const all = playlists.getAll();
+
+                if (!name) {
+                    return say(ctx.channel.id, all.length
+                        ? "🎶 Tes playlists : " + all.map(p => `**${p.name}** (${p.tracks.length})`).join(", ")
+                        : "🎶 Aucune playlist. Crée-en une dans /lecteur, onglet Playlists.");
+                }
+
+                const playlist = playlists.find(name);
+                if (!playlist) return say(ctx.channel.id, `🎶 Playlist « ${name} » introuvable.`);
+                if (!playlist.tracks.length) return say(ctx.channel.id, `🎶 « ${playlist.name} » est vide.`);
+
+                const random = findOption<boolean>(args, "aleatoire", false);
+                await player.playList(random ? shuffled(playlist.tracks) : playlist.tracks);
+                say(ctx.channel.id, `🎶 Playlist **${playlist.name}** : ${playlist.tracks.length} morceaux${random ? " (aléatoire)" : ""}.`);
             }
         },
         {
